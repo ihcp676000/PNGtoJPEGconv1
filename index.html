@@ -124,11 +124,11 @@
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: opacity 0.2s ease, transform 0.1s ease;
-    }
-
-    .btn:active {
-      transform: scale(0.99);
+      display: block;
+      text-decoration: none;
+      text-align: center;
+      box-sizing: border-box;
+      transition: opacity 0.2s ease;
     }
 
     .btn-convert {
@@ -176,7 +176,7 @@
       </div>
 
       <button class="btn btn-convert" id="convertBtn">Convert to JPEG</button>
-      <button class="btn btn-download" id="downloadBtn">Download JPEG</button>
+      <a class="btn btn-download" id="downloadBtn" download="converted.jpg">Download JPEG</a>
     </div>
   </div>
 
@@ -193,7 +193,6 @@
 
     let loadedImage = null;
     let originalFileName = "";
-    let convertedBlob = null;
 
     dropZone.addEventListener("click", () => fileInput.click());
 
@@ -254,54 +253,24 @@
       canvas.width = loadedImage.naturalWidth;
       canvas.height = loadedImage.naturalHeight;
 
-      // Solid background fill for transparent areas
+      // Solid background fill so transparent PNGs don't turn black
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(loadedImage, 0, 0);
 
       const quality = parseFloat(qualitySlider.value) / 100;
-      
-      canvas.toBlob((blob) => {
-        convertedBlob = blob;
-        previewImg.src = URL.createObjectURL(blob);
-        downloadBtn.style.display = "block";
-      }, "image/jpeg", quality);
-    });
+      const rawDataUrl = canvas.toDataURL("image/jpeg", quality);
 
-    // Universal force download mechanism
-    downloadBtn.addEventListener("click", () => {
-      if (!convertedBlob) return;
+      // Live Preview
+      previewImg.src = rawDataUrl;
 
-      const fileName = `${originalFileName || "converted"}.jpeg`;
+      // Force-stream MIME type: browser is forced to trigger download directly
+      const downloadStreamUrl = rawDataUrl.replace(/^data:image\/jpeg/, "data:application/octet-stream");
+      const downloadName = `${originalFileName || "converted"}.jpg`;
 
-      // Method 1: Standard Blob URL Download
-      const blobUrl = URL.createObjectURL(convertedBlob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      link.style.display = "none";
-      document.body.appendChild(link);
-
-      try {
-        link.click();
-        setTimeout(() => {
-          document.body.removeChild(link);
-          URL.revokeObjectURL(blobUrl);
-        }, 1000);
-      } catch (err) {
-        // Fallback for sandboxed iframe block: Convert Blob to binary Octet Stream base64
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64Data = reader.result.replace(/^data:image\/jpeg/, "data:application/octet-stream");
-          const fallbackLink = document.createElement("a");
-          fallbackLink.href = base64Data;
-          fallbackLink.download = fileName;
-          document.body.appendChild(fallbackLink);
-          fallbackLink.click();
-          document.body.removeChild(fallbackLink);
-        };
-        reader.readAsDataURL(convertedBlob);
-      }
+      downloadBtn.href = downloadStreamUrl;
+      downloadBtn.setAttribute("download", downloadName);
+      downloadBtn.style.display = "block";
     });
   </script>
 </body>
