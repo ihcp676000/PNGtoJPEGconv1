@@ -144,6 +144,8 @@
       display: none;
       background: var(--carbon-black);
       color: var(--bg-white);
+      text-align: center;
+      line-height: 20px;
     }
 
     .btn-download:hover {
@@ -254,7 +256,7 @@
       canvas.width = loadedImage.naturalWidth;
       canvas.height = loadedImage.naturalHeight;
 
-      // Solid white background for PNG transparency
+      // Solid background fill so transparent PNGs don't turn black
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(loadedImage, 0, 0);
@@ -262,7 +264,6 @@
       const quality = parseFloat(qualitySlider.value) / 100;
       convertedDataUrl = canvas.toDataURL("image/jpeg", quality);
 
-      // Update UI preview
       previewImg.src = convertedDataUrl;
       downloadBtn.style.display = "block";
     });
@@ -274,7 +275,6 @@
       const isInsideIframe = window.self !== window.top;
 
       if (!isInsideIframe) {
-        // Direct download outside iframe
         const link = document.createElement("a");
         link.href = convertedDataUrl;
         link.download = downloadFileName;
@@ -284,10 +284,10 @@
         return;
       }
 
-      // Inside Wix iframe: Open standalone escaped window
+      // Wix iFrame sandbox bypass using session-isolated popup
       const newWin = window.open("", "_blank");
       if (!newWin) {
-        alert("Please allow popups for this website to download the image.");
+        alert("Please enable popups to allow downloading.");
         return;
       }
 
@@ -313,7 +313,6 @@
               box-sizing: border-box;
               text-align: center;
             }
-            h2 { margin-bottom: 12px; }
             img {
               max-width: 85vw;
               max-height: 60vh;
@@ -334,7 +333,6 @@
               cursor: pointer;
               text-decoration: none;
               display: inline-block;
-              transition: opacity 0.2s;
             }
             .dl-btn:hover { opacity: 0.9; }
             p {
@@ -346,36 +344,32 @@
         </head>
         <body>
           <h2>Your JPEG is Ready</h2>
-          <img id="outImg" src="${convertedDataUrl}" alt="Converted Preview" />
+          <img id="previewDisplay" alt="Converted Image" />
           <div>
-            <button class="dl-btn" id="saveBtn">Save JPEG</button>
+            <button class="dl-btn" id="saveActionBtn">Save JPEG</button>
           </div>
-          <p>If automatic download doesn't trigger, click <strong>Save JPEG</strong> above or right-click the image and select "Save image as...".</p>
+          <p>If automatic download doesn't start, click <strong>Save JPEG</strong> above or right-click the image and choose "Save image as...".</p>
 
           <script>
-            function triggerDownload() {
-              const byteString = atob("${convertedDataUrl}".split(',')[1]);
-              const ab = new ArrayBuffer(byteString.length);
-              const ia = new Uint8Array(ab);
-              for (let i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-              }
-              const blob = new Blob([ab], { type: 'image/jpeg' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = "${downloadFileName}";
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              setTimeout(() => URL.revokeObjectURL(url), 1500);
+            const dataPayload = "${convertedDataUrl}";
+            const fileName = "${downloadFileName}";
+
+            // Render preview directly from base64
+            document.getElementById("previewDisplay").src = dataPayload;
+
+            function runDownload() {
+              const link = document.createElement("a");
+              link.href = dataPayload;
+              link.download = fileName;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
             }
 
-            document.getElementById('saveBtn').addEventListener('click', triggerDownload);
-            
-            // Auto trigger once opened
+            document.getElementById("saveActionBtn").addEventListener("click", runDownload);
+
             window.onload = () => {
-              setTimeout(triggerDownload, 200);
+              setTimeout(runDownload, 250);
             };
           <\/script>
         </body>
