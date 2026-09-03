@@ -144,8 +144,6 @@
       display: none;
       background: var(--carbon-black);
       color: var(--bg-white);
-      text-align: center;
-      line-height: 20px;
     }
 
     .btn-download:hover {
@@ -195,7 +193,7 @@
 
     let loadedImage = null;
     let originalFileName = "";
-    let convertedDataUrl = null;
+    let convertedBlob = null;
 
     dropZone.addEventListener("click", () => fileInput.click());
 
@@ -256,126 +254,54 @@
       canvas.width = loadedImage.naturalWidth;
       canvas.height = loadedImage.naturalHeight;
 
-      // Solid background fill so transparent PNGs don't turn black
+      // Solid background fill for transparent areas
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(loadedImage, 0, 0);
 
       const quality = parseFloat(qualitySlider.value) / 100;
-      convertedDataUrl = canvas.toDataURL("image/jpeg", quality);
-
-      previewImg.src = convertedDataUrl;
-      downloadBtn.style.display = "block";
+      
+      canvas.toBlob((blob) => {
+        convertedBlob = blob;
+        previewImg.src = URL.createObjectURL(blob);
+        downloadBtn.style.display = "block";
+      }, "image/jpeg", quality);
     });
 
+    // Universal force download mechanism
     downloadBtn.addEventListener("click", () => {
-      if (!convertedDataUrl) return;
+      if (!convertedBlob) return;
 
-      const downloadFileName = `${originalFileName || "converted"}.jpeg`;
-      const isInsideIframe = window.self !== window.top;
+      const fileName = `${originalFileName || "converted"}.jpeg`;
 
-      if (!isInsideIframe) {
-        const link = document.createElement("a");
-        link.href = convertedDataUrl;
-        link.download = downloadFileName;
-        document.body.appendChild(link);
+      // Method 1: Standard Blob URL Download
+      const blobUrl = URL.createObjectURL(convertedBlob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      link.style.display = "none";
+      document.body.appendChild(link);
+
+      try {
         link.click();
-        document.body.removeChild(link);
-        return;
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 1000);
+      } catch (err) {
+        // Fallback for sandboxed iframe block: Convert Blob to binary Octet Stream base64
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64Data = reader.result.replace(/^data:image\/jpeg/, "data:application/octet-stream");
+          const fallbackLink = document.createElement("a");
+          fallbackLink.href = base64Data;
+          fallbackLink.download = fileName;
+          document.body.appendChild(fallbackLink);
+          fallbackLink.click();
+          document.body.removeChild(fallbackLink);
+        };
+        reader.readAsDataURL(convertedBlob);
       }
-
-      // Wix iFrame sandbox bypass using session-isolated popup
-      const newWin = window.open("", "_blank");
-      if (!newWin) {
-        alert("Please enable popups to allow downloading.");
-        return;
-      }
-
-      newWin.document.open();
-      newWin.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${downloadFileName}</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <style>
-            body {
-              margin: 0;
-              background: #222121;
-              color: #FEFDFE;
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              min-height: 100vh;
-              padding: 24px;
-              box-sizing: border-box;
-              text-align: center;
-            }
-            img {
-              max-width: 85vw;
-              max-height: 60vh;
-              border-radius: 8px;
-              box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-              margin: 16px 0;
-              object-fit: contain;
-              background: #fff;
-            }
-            .dl-btn {
-              background: #FF5900;
-              color: #fff;
-              padding: 14px 32px;
-              font-size: 16px;
-              font-weight: 700;
-              border-radius: 6px;
-              border: none;
-              cursor: pointer;
-              text-decoration: none;
-              display: inline-block;
-            }
-            .dl-btn:hover { opacity: 0.9; }
-            p {
-              margin-top: 14px;
-              color: #6B818C;
-              font-size: 13px;
-            }
-          </style>
-        </head>
-        <body>
-          <h2>Your JPEG is Ready</h2>
-          <img id="previewDisplay" alt="Converted Image" />
-          <div>
-            <button class="dl-btn" id="saveActionBtn">Save JPEG</button>
-          </div>
-          <p>If automatic download doesn't start, click <strong>Save JPEG</strong> above or right-click the image and choose "Save image as...".</p>
-
-          <script>
-            const dataPayload = "${convertedDataUrl}";
-            const fileName = "${downloadFileName}";
-
-            // Render preview directly from base64
-            document.getElementById("previewDisplay").src = dataPayload;
-
-            function runDownload() {
-              const link = document.createElement("a");
-              link.href = dataPayload;
-              link.download = fileName;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }
-
-            document.getElementById("saveActionBtn").addEventListener("click", runDownload);
-
-            window.onload = () => {
-              setTimeout(runDownload, 250);
-            };
-          <\/script>
-        </body>
-        </html>
-      `);
-      newWin.document.close();
     });
   </script>
 </body>
