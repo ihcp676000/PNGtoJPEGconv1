@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PNG to JPEG Converter</title>
+  <style>
+    :root {
+      --bg-white: #FEFDFE;
+      --slate-grey: #6B818C;
+      --blaze-orange: #FF5900;
+      --carbon-black: #222121;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--slate-grey);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .converter-card {
+      background: var(--bg-white);
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(34, 33, 33, 0.2);
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: var(--carbon-black);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--blaze-orange);
+      border-radius: 8px;
+      padding: 30px 15px;
+      background: rgba(254, 253, 254, 0.6);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .drop-zone.dragover {
+      background: rgba(255, 89, 0, 0.08);
+      border-color: var(--carbon-black);
+    }
+
+    .drop-zone p {
+      color: var(--slate-grey);
+      font-size: 14px;
+    }
+
+    .drop-zone p strong {
+      color: var(--blaze-orange);
+    }
+
+    .file-name {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--carbon-black);
+      word-break: break-all;
+    }
+
+    .controls {
+      margin-top: 22px;
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .slider-group label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--carbon-black);
+      margin-bottom: 6px;
+    }
+
+    .slider-group span#qualityVal {
+      color: var(--blaze-orange);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+      accent-color: var(--blaze-orange);
+    }
+
+    .preview-container {
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    .preview-container img {
+      max-width: 100%;
+      max-height: 220px;
+      border-radius: 6px;
+      border: 1px solid var(--slate-grey);
+      object-fit: contain;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.99);
+    }
+
+    .btn-convert {
+      background: var(--blaze-orange);
+      color: var(--bg-white);
+    }
+
+    .btn-convert:hover {
+      opacity: 0.9;
+    }
+
+    .btn-download {
+      display: none;
+      background: var(--carbon-black);
+      color: var(--bg-white);
+      text-decoration: none;
+      text-align: center;
+      line-height: 20px;
+    }
+
+    .btn-download:hover {
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="converter-card">
+    <h2>PNG to JPEG Converter</h2>
+
+    <div class="drop-zone" id="dropZone">
+      <p>Drag & Drop your PNG file here or <strong>browse</strong></p>
+      <input type="file" id="fileInput" accept="image/png" style="display: none;" />
+      <div class="file-name" id="fileName"></div>
+    </div>
+
+    <div class="controls" id="controls">
+      <div class="slider-group">
+        <label>
+          <span>Quality (Compression):</span>
+          <span id="qualityVal">80%</span>
+        </label>
+        <input type="range" id="qualitySlider" min="10" max="100" value="80" />
+      </div>
+
+      <div class="preview-container">
+        <img id="previewImg" alt="Preview" />
+      </div>
+
+      <button class="btn btn-convert" id="convertBtn">Convert to JPEG</button>
+      <a class="btn btn-download" id="downloadBtn" download="converted.jpeg">Download JPEG</a>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const fileNameDisplay = document.getElementById("fileName");
+    const controls = document.getElementById("controls");
+    const qualitySlider = document.getElementById("qualitySlider");
+    const qualityVal = document.getElementById("qualityVal");
+    const previewImg = document.getElementById("previewImg");
+    const convertBtn = document.getElementById("convertBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    let loadedImage = null;
+    let originalFileName = "";
+
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.classList.remove("dragover");
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    qualitySlider.addEventListener("input", (e) => {
+      qualityVal.textContent = `${e.target.value}%`;
+    });
+
+    function handleFile(file) {
+      if (file.type !== "image/png") {
+        alert("Please upload a valid PNG image.");
+        return;
+      }
+
+      originalFileName = file.name.replace(/\.[^/.]+$/, "");
+      fileNameDisplay.textContent = file.name;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          loadedImage = img;
+          previewImg.src = e.target.result;
+          controls.style.display = "flex";
+          downloadBtn.style.display = "none";
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    convertBtn.addEventListener("click", () => {
+      if (!loadedImage) return;
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = loadedImage.naturalWidth;
+      canvas.height = loadedImage.naturalHeight;
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(loadedImage, 0, 0);
+
+      const quality = parseFloat(qualitySlider.value) / 100;
+      const jpegDataUrl = canvas.toDataURL("image/jpeg", quality);
+
+      previewImg.src = jpegDataUrl;
+
+      downloadBtn.href = jpegDataUrl;
+      downloadBtn.download = `${originalFileName || "converted"}.jpeg`;
+      downloadBtn.style.display = "block";
+    });
+  </script>
+</body>
+</html>
