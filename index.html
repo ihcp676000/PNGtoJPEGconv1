@@ -144,19 +144,10 @@
       display: none;
       background: var(--carbon-black);
       color: var(--bg-white);
-      text-align: center;
-      line-height: 20px;
     }
 
     .btn-download:hover {
       opacity: 0.85;
-    }
-
-    .info-msg {
-      font-size: 12px;
-      color: var(--slate-grey);
-      text-align: center;
-      margin-top: -6px;
     }
   </style>
 </head>
@@ -186,7 +177,6 @@
 
       <button class="btn btn-convert" id="convertBtn">Convert to JPEG</button>
       <button class="btn btn-download" id="downloadBtn">Download JPEG</button>
-      <p class="info-msg" id="infoMsg" style="display: none;">Tip: If download doesn't start automatically, right click on the image in the new tab and choose "Save Image As".</p>
     </div>
   </div>
 
@@ -200,11 +190,9 @@
     const previewImg = document.getElementById("previewImg");
     const convertBtn = document.getElementById("convertBtn");
     const downloadBtn = document.getElementById("downloadBtn");
-    const infoMsg = document.getElementById("infoMsg");
 
     let loadedImage = null;
     let originalFileName = "";
-    let convertedBlob = null;
     let convertedDataUrl = null;
 
     dropZone.addEventListener("click", () => fileInput.click());
@@ -251,7 +239,6 @@
           previewImg.src = e.target.result;
           controls.style.display = "flex";
           downloadBtn.style.display = "none";
-          infoMsg.style.display = "none";
         };
         img.src = e.target.result;
       };
@@ -267,111 +254,134 @@
       canvas.width = loadedImage.naturalWidth;
       canvas.height = loadedImage.naturalHeight;
 
-      // Fill transparent background with solid white
+      // Solid white background for PNG transparency
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(loadedImage, 0, 0);
 
       const quality = parseFloat(qualitySlider.value) / 100;
       convertedDataUrl = canvas.toDataURL("image/jpeg", quality);
-      previewImg.src = convertedDataUrl;
 
-      // Create Blob for reliable downloading
-      canvas.toBlob((blob) => {
-        convertedBlob = blob;
-        downloadBtn.style.display = "block";
-        if (window.self !== window.top) {
-          infoMsg.style.display = "block";
-        }
-      }, "image/jpeg", quality);
+      // Update UI preview
+      previewImg.src = convertedDataUrl;
+      downloadBtn.style.display = "block";
     });
 
     downloadBtn.addEventListener("click", () => {
-      if (!convertedBlob && !convertedDataUrl) return;
+      if (!convertedDataUrl) return;
 
       const downloadFileName = `${originalFileName || "converted"}.jpeg`;
       const isInsideIframe = window.self !== window.top;
 
-      if (isInsideIframe) {
-        // Solution for Wix Sandboxed iFrame:
-        // Open in a clean new window to escape the iframe download lock
-        const blobUrl = URL.createObjectURL(convertedBlob);
-        const newWin = window.open("", "_blank");
-
-        if (newWin) {
-          newWin.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <title>Downloading ${downloadFileName}...</title>
-              <style>
-                body {
-                  margin: 0;
-                  background: #222121;
-                  color: #FEFDFE;
-                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  justify-content: center;
-                  min-height: 100vh;
-                  padding: 20px;
-                  text-align: center;
-                  box-sizing: border-box;
-                }
-                img {
-                  max-width: 80vw;
-                  max-height: 60vh;
-                  border-radius: 8px;
-                  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                  margin: 20px 0;
-                }
-                .dl-btn {
-                  background: #FF5900;
-                  color: #fff;
-                  padding: 14px 28px;
-                  font-size: 16px;
-                  font-weight: bold;
-                  text-decoration: none;
-                  border-radius: 8px;
-                  box-shadow: 0 4px 12px rgba(255, 89, 0, 0.4);
-                }
-              </style>
-            </head>
-            <body>
-              <h2>Your JPEG is Ready</h2>
-              <img src="${blobUrl}" alt="Converted Image" />
-              <br/>
-              <a class="dl-btn" href="${blobUrl}" download="${downloadFileName}" id="directLink">Click Here to Save Image</a>
-              <p style="margin-top: 15px; color: #6B818C; font-size: 13px;">If download doesn't trigger automatically, click the orange button above or right-click the image and select "Save Image As".</p>
-              <script>
-                const autoLink = document.getElementById('directLink');
-                autoLink.click();
-              <\/script>
-            </body>
-            </html>
-          `);
-          newWin.document.close();
-        } else {
-          // Fallback if popup blocker intercepted
-          const link = document.createElement("a");
-          link.href = blobUrl;
-          link.download = downloadFileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
-      } else {
-        // Direct browser download when not embedded
-        const blobUrl = URL.createObjectURL(convertedBlob);
+      if (!isInsideIframe) {
+        // Direct download outside iframe
         const link = document.createElement("a");
-        link.href = blobUrl;
+        link.href = convertedDataUrl;
         link.download = downloadFileName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        return;
       }
+
+      // Inside Wix iframe: Open standalone escaped window
+      const newWin = window.open("", "_blank");
+      if (!newWin) {
+        alert("Please allow popups for this website to download the image.");
+        return;
+      }
+
+      newWin.document.open();
+      newWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${downloadFileName}</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <style>
+            body {
+              margin: 0;
+              background: #222121;
+              color: #FEFDFE;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              padding: 24px;
+              box-sizing: border-box;
+              text-align: center;
+            }
+            h2 { margin-bottom: 12px; }
+            img {
+              max-width: 85vw;
+              max-height: 60vh;
+              border-radius: 8px;
+              box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+              margin: 16px 0;
+              object-fit: contain;
+              background: #fff;
+            }
+            .dl-btn {
+              background: #FF5900;
+              color: #fff;
+              padding: 14px 32px;
+              font-size: 16px;
+              font-weight: 700;
+              border-radius: 6px;
+              border: none;
+              cursor: pointer;
+              text-decoration: none;
+              display: inline-block;
+              transition: opacity 0.2s;
+            }
+            .dl-btn:hover { opacity: 0.9; }
+            p {
+              margin-top: 14px;
+              color: #6B818C;
+              font-size: 13px;
+            }
+          </style>
+        </head>
+        <body>
+          <h2>Your JPEG is Ready</h2>
+          <img id="outImg" src="${convertedDataUrl}" alt="Converted Preview" />
+          <div>
+            <button class="dl-btn" id="saveBtn">Save JPEG</button>
+          </div>
+          <p>If automatic download doesn't trigger, click <strong>Save JPEG</strong> above or right-click the image and select "Save image as...".</p>
+
+          <script>
+            function triggerDownload() {
+              const byteString = atob("${convertedDataUrl}".split(',')[1]);
+              const ab = new ArrayBuffer(byteString.length);
+              const ia = new Uint8Array(ab);
+              for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+              }
+              const blob = new Blob([ab], { type: 'image/jpeg' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = "${downloadFileName}";
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(() => URL.revokeObjectURL(url), 1500);
+            }
+
+            document.getElementById('saveBtn').addEventListener('click', triggerDownload);
+            
+            // Auto trigger once opened
+            window.onload = () => {
+              setTimeout(triggerDownload, 200);
+            };
+          <\/script>
+        </body>
+        </html>
+      `);
+      newWin.document.close();
     });
   </script>
 </body>
