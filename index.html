@@ -12,156 +12,37 @@
       --carbon-black: #222121;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    body {
-      background: var(--slate-grey);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .converter-card {
-      background: var(--bg-white);
-      padding: 32px;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(34, 33, 33, 0.2);
-      width: 100%;
-      max-width: 480px;
-      text-align: center;
-    }
-
-    h2 {
-      margin-bottom: 20px;
-      color: var(--carbon-black);
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
-    .drop-zone {
-      border: 2px dashed var(--blaze-orange);
-      border-radius: 8px;
-      padding: 30px 15px;
-      background: rgba(254, 253, 254, 0.6);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .drop-zone.dragover {
-      background: rgba(255, 89, 0, 0.08);
-      border-color: var(--carbon-black);
-    }
-
-    .drop-zone p {
-      color: var(--slate-grey);
-      font-size: 14px;
-    }
-
-    .drop-zone p strong {
-      color: var(--blaze-orange);
-    }
-
-    .file-name {
-      margin-top: 10px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--carbon-black);
-      word-break: break-all;
-    }
-
-    .controls {
-      margin-top: 22px;
-      display: none;
-      flex-direction: column;
-      gap: 16px;
-      text-align: left;
-    }
-
-    .slider-group label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--carbon-black);
-      margin-bottom: 6px;
-    }
-
-    .slider-group span#qualityVal {
-      color: var(--blaze-orange);
-    }
-
-    input[type="range"] {
-      width: 100%;
-      cursor: pointer;
-      accent-color: var(--blaze-orange);
-    }
-
-    .preview-container {
-      margin-top: 6px;
-      text-align: center;
-    }
-
-    .preview-container img {
-      max-width: 100%;
-      max-height: 200px;
-      border-radius: 6px;
-      border: 1px solid var(--slate-grey);
-      object-fit: contain;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: block;
-      text-decoration: none;
-      text-align: center;
-      box-sizing: border-box;
-      transition: opacity 0.2s ease;
-    }
-
-    .btn-convert {
-      background: var(--blaze-orange);
-      color: var(--bg-white);
-    }
-
-    .btn-convert:hover {
-      opacity: 0.9;
-    }
-
-    .btn-download {
-      display: none;
-      background: var(--carbon-black);
-      color: var(--bg-white);
-    }
-
-    .btn-download:hover {
-      opacity: 0.85;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--slate-grey); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .converter-card { background: var(--bg-white); padding: 32px; border-radius: 12px; box-shadow: 0 10px 30px rgba(34, 33, 33, 0.2); width: 100%; max-width: 480px; text-align: center; }
+    h2 { margin-bottom: 20px; color: var(--carbon-black); font-weight: 700; letter-spacing: -0.5px; }
+    .drop-zone { border: 2px dashed var(--blaze-orange); border-radius: 8px; padding: 30px 15px; background: rgba(254, 253, 254, 0.6); cursor: pointer; transition: all 0.2s ease; }
+    .drop-zone.dragover { background: rgba(255, 89, 0, 0.08); border-color: var(--carbon-black); }
+    .drop-zone p { color: var(--slate-grey); font-size: 14px; }
+    .drop-zone p strong { color: var(--blaze-orange); }
+    .file-name { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--carbon-black); word-break: break-all; }
+    .controls { margin-top: 22px; display: none; flex-direction: column; gap: 16px; text-align: left; }
+    .slider-group label { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: var(--carbon-black); margin-bottom: 6px; }
+    .slider-group span#qualityVal { color: var(--blaze-orange); }
+    input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--blaze-orange); }
+    .preview-container { margin-top: 6px; text-align: center; }
+    .preview-container img { max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid var(--slate-grey); object-fit: contain; }
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; display: block; text-decoration: none; text-align: center; box-sizing: border-box; transition: opacity 0.2s ease; }
+    .btn-convert { background: var(--blaze-orange); color: var(--bg-white); }
+    .btn-convert:hover { opacity: 0.9; }
+    .btn-download { display: none; background: var(--carbon-black); color: var(--bg-white); }
+    .btn-download:hover { opacity: 0.85; }
   </style>
 </head>
 <body>
 
   <div class="converter-card">
     <h2>PNG to JPEG Converter</h2>
-
     <div class="drop-zone" id="dropZone">
       <p>Drag & Drop your PNG file here or <strong>browse</strong></p>
       <input type="file" id="fileInput" accept="image/png" style="display: none;" />
       <div class="file-name" id="fileName"></div>
     </div>
-
     <div class="controls" id="controls">
       <div class="slider-group">
         <label>
@@ -170,15 +51,11 @@
         </label>
         <input type="range" id="qualitySlider" min="10" max="100" value="80" />
       </div>
-
       <div class="preview-container">
         <img id="previewImg" alt="Preview" />
       </div>
-
       <button class="btn btn-convert" id="convertBtn">Convert to JPEG</button>
-      
-      <!-- Standard anchor tag for direct native download -->
-      <a class="btn btn-download" id="downloadBtn">Download JPEG</a>
+      <button class="btn btn-download" id="downloadBtn">Download JPEG</button>
     </div>
   </div>
 
@@ -195,6 +72,7 @@
 
     let loadedImage = null;
     let originalFileName = "";
+    let currentDataUrl = "";
 
     dropZone.addEventListener("click", () => fileInput.click());
 
@@ -202,21 +80,12 @@
       if (e.target.files.length) handleFile(e.target.files[0]);
     });
 
-    dropZone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropZone.classList.add("dragover");
-    });
-
-    dropZone.addEventListener("dragleave", () => {
-      dropZone.classList.remove("dragover");
-    });
-
+    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+    dropZone.addEventListener("dragleave", () => { dropZone.classList.remove("dragover"); });
     dropZone.addEventListener("drop", (e) => {
       e.preventDefault();
       dropZone.classList.remove("dragover");
-      if (e.dataTransfer.files.length) {
-        handleFile(e.dataTransfer.files[0]);
-      }
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
     });
 
     qualitySlider.addEventListener("input", (e) => {
@@ -228,7 +97,6 @@
         alert("Please upload a valid PNG image.");
         return;
       }
-
       originalFileName = file.name.replace(/\.[^/.]+$/, "");
       fileNameDisplay.textContent = file.name;
 
@@ -251,7 +119,6 @@
 
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-
       canvas.width = loadedImage.naturalWidth;
       canvas.height = loadedImage.naturalHeight;
 
@@ -260,21 +127,21 @@
       ctx.drawImage(loadedImage, 0, 0);
 
       const quality = parseFloat(qualitySlider.value) / 100;
-      const rawDataUrl = canvas.toDataURL("image/jpeg", quality);
+      currentDataUrl = canvas.toDataURL("image/jpeg", quality);
+      
+      previewImg.src = currentDataUrl;
+      downloadBtn.style.display = "block";
+    });
 
-      previewImg.src = rawDataUrl;
-
-      // Assign the data URL directly to the href and set the download attribute.
-      // This relies purely on the browser's native handling of anchor tags,
-      // avoiding custom click event listeners that trigger Wix's sandbox blocks.
+    // Send a message to the Wix parent window instead of downloading directly
+    downloadBtn.addEventListener("click", () => {
       const downloadName = `${originalFileName || "converted"}.jpg`;
       
-      downloadBtn.href = rawDataUrl;
-      downloadBtn.download = downloadName;
-      downloadBtn.style.display = "block";
-      
-      // Ensure no JavaScript onclick is interrupting the native action
-      downloadBtn.onclick = null;
+      window.parent.postMessage({
+        type: "DOWNLOAD_IMAGE",
+        fileName: downloadName,
+        dataUrl: currentDataUrl
+      }, "*"); 
     });
   </script>
 </body>
