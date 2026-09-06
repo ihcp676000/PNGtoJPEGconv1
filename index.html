@@ -28,25 +28,10 @@
             padding: 40px 20px;
             border-radius: 8px;
             cursor: pointer;
-            margin-bottom: 20px;
             transition: 0.3s;
         }
         #drop-zone:hover {
             background-color: #fff9f0;
-        }
-        #download-btn {
-            display: none;
-            background-color: #ff9900;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-        }
-        #download-btn:hover {
-            background-color: #e68a00;
         }
     </style>
 </head>
@@ -57,7 +42,6 @@
         <div id="drop-zone">Drag & Drop your PNG here or <strong>browse</strong></div>
         <input type="file" id="file-input" accept="image/png" style="display:none;">
         <canvas id="canvas" style="display:none;"></canvas>
-        <button id="download-btn">Download JPEG</button>
     </div>
 
     <script>
@@ -65,16 +49,10 @@
         const fileInput = document.getElementById('file-input');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const downloadBtn = document.getElementById('download-btn');
-        let convertedDataUrl = '';
 
-        // Trigger file input on click
         dropZone.onclick = () => fileInput.click();
-        
-        // Handle file selection
         fileInput.onchange = (e) => handleFile(e.target.files[0]);
 
-        // Handle drag and drop
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
@@ -87,6 +65,8 @@
                 return;
             }
 
+            dropZone.innerHTML = 'Converting...';
+
             const reader = new FileReader();
             reader.onload = (event) => {
                 const img = new Image();
@@ -94,33 +74,25 @@
                     canvas.width = img.width;
                     canvas.height = img.height;
                     
-                    // Add white background (JPEGs don't support transparency)
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     ctx.drawImage(img, 0, 0);
                     
-                    // Convert canvas to JPEG data URL
-                    convertedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                    const convertedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
                     
-                    // Update UI
-                    dropZone.innerHTML = '<strong>Image Converted!</strong><br>Ready to download.';
+                    // Send the converted data immediately to Velo
+                    window.parent.postMessage({
+                        type: 'conversionComplete',
+                        dataUrl: convertedDataUrl
+                    }, '*');
+                    
+                    dropZone.innerHTML = '<strong>Image Converted!</strong><br>Click the button below to download.';
                     dropZone.style.borderColor = '#4CAF50';
-                    downloadBtn.style.display = 'block';
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
-
-        // The CRITICAL part: Sending data to Wix
-        downloadBtn.onclick = () => {
-            // Post the converted image data to the parent window (Wix)
-            window.parent.postMessage({
-                action: 'triggerDownload',
-                dataUrl: convertedDataUrl,
-                fileName: 'film-by-him-converted.jpg'
-            }, '*'); 
-        };
     </script>
 </body>
 </html>
