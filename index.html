@@ -1,52 +1,94 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>JPEG to PNG Converter</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 40px;
+        }
+
+        #status {
+            margin-top: 20px;
+        }
+    </style>
 </head>
+
 <body>
-    <input type="file" id="uploadInput" accept="image/jpeg, image/jpg" />
-    <button id="convertBtn">Convert to PNG</button>
+
+    <h2>File Test</h2>
+
+    <input type="file" id="fileInput">
+
+    <p id="status">No file selected</p>
+
 
     <script>
-        let convertedImageURL = "";
 
-        // Step 1: Convert the image and send the URL to Wix Velo
-        document.getElementById('convertBtn').addEventListener('click', () => {
-            const file = document.getElementById('uploadInput').files[0];
-            if (!file) return;
+        let selectedFile = null;
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
+        const fileInput = document.getElementById("fileInput");
+        const status = document.getElementById("status");
 
-                    // Generate the Base64 PNG URL
-                    convertedImageURL = canvas.toDataURL('image/png');
 
-                    // Post the URL up to the Wix parent page
-                    window.parent.postMessage(convertedImageURL, "*");
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
+        // File selected
+        fileInput.addEventListener("change", function () {
 
-        // Step 2: Listen for the click signal from your Wix #Button1
-        window.addEventListener('message', (event) => {
-            if (event.data === 'trigger_download' && convertedImageURL) {
-                const link = document.createElement('a');
-                link.href = convertedImageURL;
-                link.download = 'converted_image.png';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+            if (fileInput.files.length === 0) {
+                selectedFile = null;
+                status.textContent = "No file selected";
+                return;
             }
+
+            selectedFile = fileInput.files[0];
+
+            status.textContent =
+                "Selected: " + selectedFile.name;
+
         });
+
+
+        // Receive message from Wix
+        window.addEventListener("message", function (event) {
+
+            if (event.data === "DOWNLOAD_FILE") {
+
+                if (!selectedFile) {
+                    status.textContent =
+                        "Please select a file first.";
+                    return;
+                }
+
+                const url =
+                    URL.createObjectURL(selectedFile);
+
+                const link =
+                    document.createElement("a");
+
+                link.href = url;
+                link.download = selectedFile.name;
+
+                document.body.appendChild(link);
+
+                link.click();
+
+                link.remove();
+
+                setTimeout(function () {
+                    URL.revokeObjectURL(url);
+                }, 1000);
+
+                status.textContent =
+                    "Download started.";
+
+            }
+
+        });
+
     </script>
+
 </body>
 </html>
